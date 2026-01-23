@@ -1,0 +1,192 @@
+[
+  {
+    "id": "intelligence-agent",
+    "name": "Intelligence_Agent",
+    "category": "ai",
+    "description": "Modular orchestration engine for building, routing, and managing intelligent agents with tool and prompt integration.",
+    "filename": "ai_utility_orchestrator-0.1.0-py3-none-any.whl",
+    "iconName": "Brain",
+    "version": "1.0.0",
+    "rating": 4.9,
+    "downloads": "850K",
+    "status": "active",
+    "featured": true,
+    "tags": [
+      "AI",
+      "Agent",
+      "Orchestration",
+      "LLM",
+      "Autonomous"
+    ],
+    "color": "from-purple-500 to-blue-500",
+    "author": "NEXUS AI Team",
+    "lastUpdated": "Today",
+    "size": "12.4 MB",
+    "dependencies": 3,
+    "features": [
+      "Intelligent decision making",
+      "Multi-agent orchestration",
+      "Context-aware execution",
+      "Real-time tool invocation",
+      "Extensible and configurable"
+    ]
+  },
+  {
+    "id": "insight-logger",
+    "name": "InsightLogger",
+    "category": "logging",
+    "filename": "logging_utils-0.1.0-py3-none-any.whl",
+    "description": "Comprehensive logging and analytics system with real-time insights and intelligent monitoring.",
+    "iconName": "Eye",
+    "version": "3.0.1",
+    "rating": 4.8,
+    "downloads": "680K",
+    "status": "active",
+    "featured": true,
+    "tags": [
+      "Logging",
+      "Analytics",
+      "Monitoring",
+      "Insights"
+    ],
+    "color": "from-green-500 to-teal-500",
+    "author": "Analytics Team",
+    "lastUpdated": "1 day ago",
+    "size": "8.2 MB",
+    "dependencies": 5,
+    "features": [
+      "File and console logging",
+      "MongoDB, PostgreSQL, Neo4j, Snowflake handlers",
+      "JSON log formatting",
+      "Async-safe logging",
+      "Function decorator logging",
+      "Global exception logging",
+      "Flask and FastAPI integration"
+    ]
+  },
+  {
+    "id": "confique",
+    "name": "Confique",
+    "category": "configuration",
+    "filename": "config_loader-0.1.0-py3-none-any.whl",
+    "description": "Dynamic configuration management system with version control and environment-specific settings.",
+    "iconName": "Settings",
+    "version": "2.3.0",
+    "rating": 4.6,
+    "downloads": "390K",
+    "status": "active",
+    "featured": false,
+    "tags": [
+      "Configuration",
+      "Management",
+      "Version Control",
+      "Environment"
+    ],
+    "color": "from-orange-500 to-red-500",
+    "author": "Config Team",
+    "lastUpdated": "3 days ago",
+    "size": "5.6 MB",
+    "dependencies": 2,
+    "features": [
+      "Dynamic configuration",
+      "Version control",
+      "Environment management",
+      "Hot reloading",
+      "Validation system"
+    ]
+  },
+  {
+    "id": "api-bridge",
+    "name": "ApiBridge",
+    "category": "integration",
+    "filename": "frontend_api-0.1.2-py3-none-any.whl",
+    "description": "Universal API integration bridge with protocol translation and seamless connectivity.",
+    "iconName": "Link",
+    "version": "1.9.5",
+    "rating": 4.5,
+    "downloads": "720K",
+    "status": "active",
+    "featured": true,
+    "tags": [
+      "API",
+      "Integration",
+      "Bridge",
+      "Protocol"
+    ],
+    "color": "from-indigo-500 to-purple-500",
+    "author": "Integration Team",
+    "lastUpdated": "4 days ago",
+    "size": "15.3 MB",
+    "dependencies": 8,
+    "features": [
+      "Universal API support",
+      "Protocol translation",
+      "Rate limiting",
+      "Authentication handling",
+      "Error recovery"
+    ]
+  },
+  {
+    "id": "docflow",
+    "name": "DocFlow",
+    "category": "document-ai",
+    "description": "Modular LLM pipeline for intelligent document parsing, chunking, embedding, and retrieval",
+    "filename": "docflow-1.0.2-py3-none-any.whl",
+    "iconName": "FileText",
+    "version": "1.0.0",
+    "rating": 4.8,
+    "downloads": "310K",
+    "status": "active",
+    "featured": true,
+    "tags": [
+      "DocumentAI",
+      "RAG",
+      "SemanticSearch",
+      "VectorDB"
+    ],
+    "color": "from-sky-500 to-blue-600",
+    "author": "DocChain Team",
+    "lastUpdated": "Today",
+    "size": "9.1 MB",
+    "dependencies": 4,
+    "features": [
+      "Document format parsing",
+      "Contextual smart chunking",
+      "Text embedding generation",
+      "Semantic document retrieval",
+      "Modular pipeline design"
+    ]
+  },
+  {
+    "id": "vocalis",
+    "name": "Vocalis",
+    "category": "voice-assistant",
+    "filename": "voice_assistant-0.1.0-py3-none-any.whl",
+    "description": "Conversational voice assistant framework for multimodal, natural language interaction and real-time task execution.",
+    "iconName": "Mic",
+    "version": "1.0.0",
+    "rating": 4.7,
+    "downloads": "95K",
+    "status": "active",
+    "featured": true,
+    "tags": [
+      "Voice",
+      "Assistant",
+      "Speech",
+      "Conversation",
+      "AI"
+    ],
+    "color": "from-pink-500 to-rose-500",
+    "author": "ViziLab Team",
+    "lastUpdated": "Today",
+    "size": "10.3 MB",
+    "dependencies": 6,
+    "features": [
+      "Speech-to-text and text-to-speech",
+      "Intent recognition",
+      "Multimodal input processing",
+      "Custom command handling",
+      "Realtime assistant responses"
+    ]
+  }
+]

@@ -1,0 +1,197 @@
+pipeline {
+  agent any
+
+  environment {
+    REPO_URL = 'https://github.com/64SquaresApexLLP/AI-Studio-V2.git'
+    FRONTEND_DIR  = 'AI-Studio-V2/Frontend'
+    BACKEND_DIR = 'AI-Studio-V2/Backend'
+    BRANCH = 'main'
+    BUILD_STATUS = 'SUCCESS'
+    TEAM_EMAILS = 'saurabhp@64-squares.com'
+  }
+
+  triggers {
+    githubPush()
+  }
+
+  stages {
+    stage('Pull Latest Code') {
+      steps {
+        script {
+          withCredentials([usernamePassword(credentialsId: '8f94f14d-2ced-4ac1-827d-e69aad71f1fc', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+            if (fileExists('AI-Studio-V2/.git')) {
+              dir('AI-Studio-V2') {
+                echo "🔁 Pulling latest code from branch ${BRANCH}..."
+                sh 'git reset --hard'
+                sh 'git clean -fd'
+                sh "git pull https://${GIT_USER}:${GIT_TOKEN}@github.com/64SquaresApexLLP/AI-Studio-V2.git ${BRANCH}"
+              }
+            } else {
+              echo "🆕 Cloning repository as fallback..."
+              sh "rm -rf AI-Studio-V2"
+              sh "git clone -b ${BRANCH} https://${GIT_USER}:${GIT_TOKEN}@github.com/64SquaresApexLLP/AI-Studio-V2.git"
+            }
+
+            dir('AI-Studio-V2') {
+              def latestCommit = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+              echo "✅ Checked out commit: ${latestCommit}"
+            }
+          }
+        }
+      }
+    }
+
+    stage('Install Frontend Dependencies') {
+      steps {
+        dir("${FRONTEND_DIR}") {
+          sh 'npm install'
+        }
+      }
+    }
+
+    stage('Build Frontend') {
+      steps {
+        dir("${FRONTEND_DIR}") {
+          sh 'npm run build'
+        }
+      }
+    }
+
+  stage('Set Up Python Backend') {
+  steps {
+    dir("${BACKEND_DIR}") {
+      sh '''
+        python3 -m venv venv
+        ./venv/bin/pip install --upgrade pip
+        ./venv/bin/pip install --cache-dir="$WORKSPACE/.pip-cache" -r requirements.txt
+      '''
+    }
+  }
+}
+
+    stage('Validate Backend Code') {
+      steps {
+        dir("${BACKEND_DIR}") {
+          sh './venv/bin/python3 -m py_compile main.py'
+        }
+      }
+    }
+
+stage('Start Backend (FastAPI) on Port 8077') {
+  steps {
+    dir("${BACKEND_DIR}") {
+      sh '''
+        echo "🌐 Killing any existing process on port 8077..."
+        fuser -k 8077/tcp || true
+
+        echo "🚀 Starting FastAPI backend via PM2..."
+
+        export $(grep -v '^#' .env | xargs)
+
+        pm2 delete backend || true
+
+        pm2 start ./venv/bin/uvicorn \
+          --name backend \
+          --interpreter none \
+          -- main:app --host 0.0.0.0 --port 8077
+      '''
+    }
+  }
+}
+
+
+
+    stage('Send Team Email Notification') {
+      steps {
+        script {
+          echo "📧 Sending email notification to team..."
+          def commitInfo = ""
+          def triggeredBy = ""
+
+          try {
+            dir('AI-Studio-V2') {
+              commitInfo = sh(script: 'git log -1 --pretty=format:"%h - %an: %s"', returnStdout: true).trim()
+              triggeredBy = sh(script: 'git log -1 --pretty=format:"%an (%ae)"', returnStdout: true).trim()
+            }
+          } catch (Exception e) {
+            commitInfo = "Unable to fetch commit info"
+            triggeredBy = "Unknown"
+          }
+
+          def emailSubject = ""
+          def emailBody = ""
+
+          if (env.BUILD_STATUS == 'SUCCESS') {
+            emailSubject = "✅ Deployment SUCCESS: AI-Studio-V2 [#${env.BUILD_NUMBER}]"
+            emailBody = """
+🎉 AI-Studio-V2 Deployment Successful!
+
+📋 Build Info:
+• Job: ${env.JOB_NAME}
+• Build: #${env.BUILD_NUMBER}
+• Status: SUCCESS ✅
+• URL: ${env.BUILD_URL}
+
+📦 Repo:
+• URL: ${env.REPO_URL}
+• Branch: ${env.BRANCH}
+• Commit: ${commitInfo}
+• Triggered by: ${triggeredBy}
+
+✅ Frontend built successfully
+✅ Backend running on port 8077
+🌐 Frontend served via NGINX
+
+⏰ Time: ${new Date()}
+
+This is an automated message from Jenkins CI/CD.
+"""
+          } else {
+            emailSubject = "❌ Deployment FAILURE: AI-Studio-V2 [#${env.BUILD_NUMBER}]"
+            emailBody = """
+⚠️ Deployment Failed!
+
+📋 Build Info:
+• Job: ${env.JOB_NAME}
+• Build: #${env.BUILD_NUMBER}
+• Status: FAILURE ❌
+• URL: ${env.BUILD_URL}
+
+📦 Repo:
+• Branch: ${env.BRANCH}
+• Commit: ${commitInfo}
+• Triggered by: ${triggeredBy}
+
+⏰ Time: ${new Date()}
+
+Please check Jenkins logs and take action.
+"""
+          }
+
+          mail(
+            to: env.TEAM_EMAILS,
+            subject: emailSubject,
+            body: emailBody
+          )
+        }
+      }
+    }
+  }
+
+  post {
+    failure {
+      script {
+        env.BUILD_STATUS = 'FAILURE'
+        echo "❌ Pipeline failed."
+      }
+    }
+
+    success {
+      echo "✅ Pipeline completed successfully."
+    }
+
+    always {
+      echo "📡 GitHub webhook active. Pipeline finished"
+    }
+  }
+}
