@@ -1,3 +1,4 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 aenum
 aiofiles
 aiohappyeyeballs
@@ -27,6 +28,9 @@ jiter
 jsonpatch
 jsonpointer
 langchain
+langchain-google-genai
+langchain-anthropic
+langchain-community
 langchain-core
 langchain-groq
 langchain-openai
@@ -54,6 +58,7 @@ PyYAML
 regex
 requests
 requests-toolbelt
+torch==2.2.2+cpu
 sentence-transformers
 sniffio
 snowflake-connector-python
@@ -71,11 +76,10 @@ websockets
 yarl
 zstandard
 PyPDF2
-langchain-google-genai
-langchain-anthropic
-langchain langchain-core langchain-community langchain-google-genai
 snowflake-sqlalchemy
-sqlalchemy
-pydantic[email]
+pydantic
+email-validator
 pyotp
 fastapi_mail
+bcrypt==4.1.3
+reportlab==4.2.0
