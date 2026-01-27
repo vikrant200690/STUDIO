@@ -12,7 +12,16 @@ from api.tts_route import app as tts_app
 from utils.logger import setup_logger
 from services.api_usage_tracker import APIUsageTracker, APIUsageMiddleware
 from routes.export import router as export_router
+from huggingface_hub import login
 
+hf_token = os.getenv("HF_TOKEN")
+if hf_token:
+    login(token=hf_token)
+    print("✅ Hugging Face token loaded")
+else:
+    print("⚠️ HF_TOKEN not set")
+    
+    
 load_dotenv()
 
 # Get URL configuration with fallback

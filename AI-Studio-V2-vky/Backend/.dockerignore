@@ -1,0 +1,10 @@
+.env
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+node_modules/
+tests/

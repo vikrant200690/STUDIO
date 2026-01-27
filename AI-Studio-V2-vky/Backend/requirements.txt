@@ -40,7 +40,7 @@ marshmallow
 multidict
 mypy_extensions
 nltk
-numpy
+numpy<2.0
 openai
 orjson
 packaging
