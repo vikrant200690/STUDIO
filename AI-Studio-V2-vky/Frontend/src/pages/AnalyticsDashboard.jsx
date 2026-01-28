@@ -158,7 +158,8 @@ const AnalyticsDashboard = () => {
     }
  
     try {
-      const backendUrl = "http://localhost:8077";
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      // const backendUrl = "http://localhost:8077";
       const protocol = backendUrl.startsWith("https:") ? "wss:" : "ws:";
       const host = backendUrl.replace(/^https?:\/\//, "");
       
