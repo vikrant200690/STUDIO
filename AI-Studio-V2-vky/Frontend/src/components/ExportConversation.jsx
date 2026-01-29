@@ -36,12 +36,10 @@ const ExportConversation = ({ chatHistory = [] }) => {
   const exportConversation = async (format) => {
     setOpen(false);
 
-    const base = import.meta.env.VITE_BACKEND_URL.replace(/\/+$/, "");
-
-const res = await fetch(`${base}/export`, {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/export`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(data),
+  body: JSON.stringify({ format, messages }),
 });
     if (!res.ok) return;
 
