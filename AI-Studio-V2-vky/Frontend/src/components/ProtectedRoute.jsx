@@ -21,10 +21,10 @@ const ProtectedRoute = () => {
   }
 
   // Redirect to login if not authenticated
-  // if (!isAuthenticated) {
-  //   console.log("❌ Not authenticated, redirecting to /login");
-  //   return <Navigate to="/login" replace />;
-  // }
+  if (!isAuthenticated) {
+    console.log("❌ Not authenticated, redirecting to /login");
+    return <Navigate to="/login" replace />;
+  }
 
   // Render child routes if authenticated
   console.log("✅ Authenticated, rendering protected content");
