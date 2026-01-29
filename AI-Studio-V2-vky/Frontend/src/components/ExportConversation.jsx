@@ -37,12 +37,12 @@ const ExportConversation = ({ chatHistory = [] }) => {
     setOpen(false);
      
     
-    const res = await fetch(import.meta.env.VITE_BACKEND_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ format, messages }),
-    });
-
+        
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/export`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ format, messages }),
+});
     if (!res.ok) return;
 
     const blob = await res.blob();
