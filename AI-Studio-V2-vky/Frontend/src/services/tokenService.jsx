@@ -9,40 +9,39 @@ const api = axios.create({
 
 // Function to set up interceptor with logout callback
 export const setupInterceptors = (logoutCallback) => {
+  let isRefreshing = false;
+
   api.interceptors.response.use(
     (response) => response,
-    (error) => {
-      if (error.response?.status === 401) {
-        console.log("❌ 401 Unauthorized - Logging out");
-        logoutCallback();
+    async (error) => {
+      const originalRequest = error.config;
+
+      // If access token expired
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+
+        try {
+          if (!isRefreshing) {
+            isRefreshing = true;
+            console.log("🔄 Trying to refresh token...");
+            await api.post("/api/auth/refresh-token"); // 🍪 backend sets new cookie
+            isRefreshing = false;
+          }
+
+          // Retry original request
+          return api(originalRequest);
+
+        } catch (refreshError) {
+          console.log("❌ Refresh failed — logging out");
+          logoutCallback();
+          return Promise.reject(refreshError);
+        }
       }
+
       return Promise.reject(error);
     }
   );
 };
-
-// Regular login (cookie-based)
-export const login = async (username, password) => {
-  console.log("🔍 Making login request");
-  const response = await api.post("/api/auth/login", {
-    username,
-    password,
-  });
-  console.log("✅ Login response:");
-  return response.data;
-};
-
-// Regular signup
-export const signup = async (username, email, password) => {
-  console.log("🔍 Making signup request");
-  const response = await api.post("/api/auth/signup", {
-    username,
-    email,
-    password,
-  });
-  return response.data;
-};
-
 // OTP Login - Request OTP
 export const loginRequestOTP = async (email, password) => {
   const response = await api.post("/api/auth/login/request-otp", {
