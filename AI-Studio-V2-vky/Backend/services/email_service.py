@@ -1,42 +1,30 @@
-# services/email_service.py
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 import os
-import ssl
-import certifi
+import resend
 
-ssl_context = ssl.create_default_context(cafile=certifi.where())
+# Load API key once
+resend.api_key = os.getenv("RESEND_API_KEY")
+
+if not resend.api_key:
+    raise ValueError("❌ RESEND_API_KEY environment variable is not set")
 
 
-def get_email_config():
-    """Lazy load email configuration with validation"""
-    
-    mail_username = os.getenv("MAIL_USERNAME")
-    mail_password = os.getenv("MAIL_PASSWORD")
-    mail_from = os.getenv("MAIL_FROM")
-    
-    # Validate environment variables
-    if not mail_username:
-        raise ValueError("❌ MAIL_USERNAME environment variable is not set")
-    if not mail_password:
-        raise ValueError("❌ MAIL_PASSWORD environment variable is not set")
-    if not mail_from:
-        raise ValueError("❌ MAIL_FROM environment variable is not set")
-    
-    print(f"✅ Email config loaded: {mail_username}")
-    
-    return ConnectionConfig(
-        MAIL_USERNAME=mail_username,
-        MAIL_PASSWORD=mail_password,
-        MAIL_FROM=mail_from,
-        MAIL_PORT=587,
-        MAIL_SERVER="smtp.gmail.com",
-        MAIL_STARTTLS=True,
-        MAIL_SSL_TLS=False,
-        VALIDATE_CERTS=False,
-    )
+# 🔹 Common email wrapper
+def send_email(to_email: str, subject: str, html_content: str):
+    try:
+        resend.Emails.send({
+            "from": "AI Studio V2 <onboarding@resend.dev>",  # change after domain verification
+            "to": [to_email],
+            "subject": subject,
+            "html": html_content,
+        })
+        print(f"✅ Email sent to {to_email}")
+    except Exception as e:
+        print(f"❌ Failed to send email: {e}")
+        raise e
 
+
+# 🔹 Signup OTP
 async def send_signup_otp_email(email: str, otp: str):
-    """Send OTP for signup verification"""
     html_content = f"""
     <html>
         <body>
@@ -52,19 +40,16 @@ async def send_signup_otp_email(email: str, otp: str):
         </body>
     </html>
     """
-    
-    message = MessageSchema(
-        subject="Verify Your Email - AI Studio V2",
-        recipients=[email],
-        body=html_content,
-        subtype="html"
-    )
-    
-    fast_mail = FastMail(get_email_config())
-    await fast_mail.send_message(message)
 
+    send_email(
+        to_email=email,
+        subject="Verify Your Email - AI Studio V2",
+        html_content=html_content
+    )
+
+
+# 🔹 Login OTP
 async def send_login_otp_email(email: str, otp: str):
-    """Send OTP for login verification"""
     html_content = f"""
     <html>
         <body>
@@ -80,13 +65,9 @@ async def send_login_otp_email(email: str, otp: str):
         </body>
     </html>
     """
-    
-    message = MessageSchema(
+
+    send_email(
+        to_email=email,
         subject="Your Login OTP - AI Studio V2",
-        recipients=[email],
-        body=html_content,
-        subtype="html"
+        html_content=html_content
     )
-    
-    fast_mail = FastMail(get_email_config())
-    await fast_mail.send_message(message)

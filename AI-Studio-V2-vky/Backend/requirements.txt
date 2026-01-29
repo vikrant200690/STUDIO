@@ -83,3 +83,4 @@ pyotp
 fastapi_mail
 bcrypt==4.1.3
 reportlab==4.2.0
+resend
