@@ -1,5 +1,5 @@
 // src/context/ChatContext.jsx
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useRef } from "react";
 import api from "../src/services/tokenService";
 
 const ChatContext = createContext();
@@ -21,6 +21,11 @@ export const ChatProvider = ({ children }) => {
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [autoPlayTTS, setAutoPlayTTS] = useState(false);
   const [ttsVoice, setTtsVoice] = useState("default");
+
+  // Streaming state
+  const [isStreaming, setIsStreaming] = useState(false);
+  const streamingIntervalRef = useRef(null);
+  const abortStreamRef = useRef(false);
 
   const [messages, setMessages] = useState([
     {
@@ -62,40 +67,154 @@ export const ChatProvider = ({ children }) => {
     document:
       "You are a document analysis assistant. You summarize, answer questions, and provide insights based on the uploaded document, referencing key sections and facts.",
     custom: " ",
-    };
+  };
+
+  // Fake streaming function
+  const streamResponse = async (
+    fullContent,
+    sources = null,
+    contextUsed = false,
+    documentMode = false
+  ) => {
+    return new Promise((resolve) => {
+      const timestamp = new Date().toISOString();
+      abortStreamRef.current = false;
+      setIsStreaming(true);
+
+      // Add empty AI message that will be updated
+      const messageId = Date.now();
+      const initialMessage = {
+        id: messageId,
+        sender: "ai",
+        content: "",
+        timestamp,
+        sources,
+        contextUsed,
+        documentMode,
+        isStreaming: true,
+      };
+
+      setMessages((prev) => [...prev, initialMessage]);
+
+      let currentIndex = 0;
+      const words = fullContent.split(" ");
+      
+      // Adjust speed based on content length
+      const baseSpeed = 30; // milliseconds per word
+      const speed = Math.max(15, Math.min(50, baseSpeed));
+
+      streamingIntervalRef.current = setInterval(() => {
+        if (abortStreamRef.current) {
+          // If aborted, show full content immediately
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === messageId
+                ? { ...msg, content: fullContent, isStreaming: false }
+                : msg
+            )
+          );
+          clearInterval(streamingIntervalRef.current);
+          setIsStreaming(false);
+          resolve();
+          return;
+        }
+
+        if (currentIndex < words.length) {
+          currentIndex++;
+          const partialContent = words.slice(0, currentIndex).join(" ");
+
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === messageId ? { ...msg, content: partialContent } : msg
+            )
+          );
+        } else {
+          // Streaming complete
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === messageId ? { ...msg, isStreaming: false } : msg
+            )
+          );
+          clearInterval(streamingIntervalRef.current);
+          setIsStreaming(false);
+
+          // Add to chat history
+          setChatHistory((prev) => [
+            ...prev,
+            { role: "ai", content: fullContent, timestamp },
+          ]);
+
+          // Handle auto-play TTS
+          if (autoPlayTTS && ttsEnabled) {
+            setTimeout(() => {
+              handleTextToSpeech(fullContent, messages.length);
+            }, 500);
+          }
+
+          resolve();
+        }
+      }, speed);
+    });
+  };
+
+  // Stop streaming function
+  const stopStreaming = () => {
+    abortStreamRef.current = true;
+  };
 
   const addMessage = (
     content,
     role,
     sources = null,
     contextUsed = false,
-    documentMode = false
+    documentMode = false,
+    useStreaming = false
   ) => {
     const timestamp = new Date().toISOString();
 
-    setChatHistory((prev) => [...prev, { role, content, timestamp }]);
+    if (role === "user") {
+      // User messages are added immediately
+      setChatHistory((prev) => [...prev, { role, content, timestamp }]);
 
-    const newMessage = {
-      sender: role,
-      content,
-      timestamp,
-      sources,
-      contextUsed,
-      documentMode,
-    };
+      const newMessage = {
+        sender: role,
+        content,
+        timestamp,
+        sources,
+        contextUsed,
+        documentMode,
+      };
 
-    setMessages((prev) => [...prev, newMessage]);
+      setMessages((prev) => [...prev, newMessage]);
+    } else if (role === "ai" && useStreaming) {
+      // AI messages with streaming
+      streamResponse(content, sources, contextUsed, documentMode);
+    } else {
+      // AI messages without streaming (legacy behavior)
+      setChatHistory((prev) => [...prev, { role, content, timestamp }]);
 
-    if (role === "ai" && autoPlayTTS && ttsEnabled) {
-      setTimeout(() => {
-        handleTextToSpeech(content, messages.length);
-      }, 500);
+      const newMessage = {
+        sender: role,
+        content,
+        timestamp,
+        sources,
+        contextUsed,
+        documentMode,
+      };
+
+      setMessages((prev) => [...prev, newMessage]);
+
+      if (role === "ai" && autoPlayTTS && ttsEnabled) {
+        setTimeout(() => {
+          handleTextToSpeech(content, messages.length);
+        }, 500);
+      }
     }
   };
 
   const handleTextToSpeech = async (text, messageIndex) => {
     try {
-      const response = await api.post('/api/tts', {  // ✅ Added /api
+      const response = await api.post("/api/tts", {
         text: text,
       });
 
@@ -127,10 +246,10 @@ export const ChatProvider = ({ children }) => {
       formData.append("audio", audioBlob, "recording.wav");
       formData.append("document_mode", documentMode.toString());
 
-      const response = await api.post('/api/transcribe', formData, {  // ✅ Added /api
+      const response = await api.post("/api/transcribe", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-        }
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       const data = response.data;
@@ -139,9 +258,9 @@ export const ChatProvider = ({ children }) => {
         addMessage(data.transcript, "user");
 
         if (data.response) {
-          addMessage(
+          // Use streaming for voice responses
+          await streamResponse(
             data.response,
-            "ai",
             data.sources || [],
             data.context_used || false,
             data.document_mode || false
@@ -215,7 +334,7 @@ export const ChatProvider = ({ children }) => {
 
   const handleSendMessage = async (message, documentMode = false) => {
     try {
-      const response = await api.post('/api/chat', {  // ✅ Added /api (THIS WAS THE MAIN 404!)
+      const response = await api.post("/api/chat", {
         model,
         temperature,
         top_p: topP,
@@ -226,9 +345,9 @@ export const ChatProvider = ({ children }) => {
 
       const data = response.data;
 
-      addMessage(
+      // Use streaming for AI responses
+      await streamResponse(
         data.response,
-        "ai",
         data.sources || [],
         data.context_used || false,
         documentMode
@@ -238,12 +357,19 @@ export const ChatProvider = ({ children }) => {
 
       addMessage(
         "Sorry, I encountered an error while processing your request. Please try again.",
-        "ai"
+        "ai",
+        null,
+        false,
+        false,
+        false // Don't stream error messages
       );
     }
   };
 
   const clearMessages = () => {
+    // Stop any ongoing streaming
+    stopStreaming();
+    
     setMessages([
       {
         sender: "ai",
@@ -292,6 +418,9 @@ export const ChatProvider = ({ children }) => {
         setTtsVoice,
         handleTextToSpeech,
         handleVoiceTranscription,
+        isStreaming,
+        stopStreaming,
+        streamResponse,
       }}
     >
       {children}
@@ -306,4 +435,3 @@ export const useChat = () => {
   }
   return context;
 };
-
